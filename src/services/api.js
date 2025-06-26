@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Automatically include CSRF via xsrf settings
 const api = axios.create({
-  baseURL: 'https://signal-predictor.onrender.com/api',
+  baseURL: process.env.REACT_APP_API_BASE_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

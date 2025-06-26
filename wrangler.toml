@@ -1,0 +1,10 @@
+# Wrangler configuration for Cloudflare Pages
+name = "signal-predictor-frontend"
+
+[env.production]
+compatibility_date = "2024-06-27"
+
+# Pages configuration
+[env.production.pages]
+build_output_dir = "build"
+build_command = "npm run build"
