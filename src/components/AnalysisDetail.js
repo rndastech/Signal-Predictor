@@ -1,12 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { signalAPI } from '../services/api';
-import { useAuth } from '../context/AuthContext';
 
 const AnalysisDetail = () => {
   const { analysisId } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
   
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,42 +16,41 @@ const AnalysisDetail = () => {
   const [renameError, setRenameError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  useEffect(() => {
-    fetchAnalysis();
-  }, [analysisId]);  const fetchAnalysis = async () => {
-    try {
-      const response = await signalAPI.getAnalysis(analysisId);
-      let analysisData = response.data;
-      
-      // Ensure parameters and dominant_frequencies are parsed as objects if they come as strings
-      if (typeof analysisData.parameters === 'string') {
-        try {
-          analysisData.parameters = JSON.parse(analysisData.parameters);
-        } catch (e) {
-          console.error('Failed to parse parameters:', e);
-        }
+
+const fetchAnalysis = useCallback(async () => {
+  try {
+    const response = await signalAPI.getAnalysis(analysisId);
+    let analysisData = response.data;
+    if (typeof analysisData.parameters === 'string') {
+      try {
+        analysisData.parameters = JSON.parse(analysisData.parameters);
+      } catch (e) {
+        console.error('Failed to parse parameters:', e);
       }
-      
-      if (typeof analysisData.dominant_frequencies === 'string') {
-        try {
-          analysisData.dominant_frequencies = JSON.parse(analysisData.dominant_frequencies);
-        } catch (e) {
-          console.error('Failed to parse dominant_frequencies:', e);
-        }
-      }
-      
-      setAnalysis(analysisData);
-      // Debug log to see the data structure
-      console.log('Analysis Data:', analysisData);
-      console.log('Parameters:', analysisData.parameters);
-      console.log('Dominant Frequencies:', analysisData.dominant_frequencies);
-    } catch (error) {
-      setError('Failed to load analysis');
-      console.error('Error fetching analysis:', error);
-    } finally {
-      setLoading(false);
     }
-  };
+    if (typeof analysisData.dominant_frequencies === 'string') {
+      try {
+        analysisData.dominant_frequencies = JSON.parse(analysisData.dominant_frequencies);
+      } catch (e) {
+        console.error('Failed to parse dominant_frequencies:', e);
+      }
+    }
+    setAnalysis(analysisData);
+    console.log('Analysis Data:', analysisData);
+    console.log('Parameters:', analysisData.parameters);
+    console.log('Dominant Frequencies:', analysisData.dominant_frequencies);
+  } catch (error) {
+    setError('Failed to load analysis');
+    console.error('Error fetching analysis:', error);
+  } finally {
+    setLoading(false);
+  }
+}, [analysisId]);
+
+useEffect(() => {
+  fetchAnalysis();
+}, [fetchAnalysis]);
+
   const handleEvaluate = async (e) => {
     e.preventDefault();
     if (!xValue.trim()) return;
@@ -133,7 +130,7 @@ const AnalysisDetail = () => {
     return fittedFunction
       // Add spaces around operators
       .replace(/\+/g, ' + ')
-      .replace(/\-/g, ' - ')
+      .replace(/-/g, ' - ')
       .replace(/\*/g, ' * ')
       // Add spaces around parentheses for better readability
       .replace(/\(/g, '(')
@@ -145,7 +142,7 @@ const AnalysisDetail = () => {
       // Fix cases where we might have created "π * *" patterns
       .replace(/π \* \*/g, 'π *')
       // Fix negative signs that might have gotten extra spaces
-      .replace(/\+ \-/g, '- ')
+      .replace(/\+ -/g, '- ')
       .trim();
   };
 

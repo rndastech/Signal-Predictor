@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
 const ChangePassword = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
@@ -155,10 +153,11 @@ const ChangePassword = () => {
 
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
-                  <label className="form-label text-warning">
-                    <i className="fas fa-lock me-2"></i>Current Password
+                  <label htmlFor="current_password" className="form-label text-warning">
+                    <i className="fas fa-lock me-2"></i> Current Password
                   </label>
                   <input 
+                    id="current_password"
                     type="password" 
                     className={`form-control ${errors.current_password ? 'is-invalid' : ''}`}
                     name="current_password"
@@ -174,10 +173,11 @@ const ChangePassword = () => {
                 </div>
                 
                 <div className="mb-3">
-                  <label className="form-label text-warning">
-                    <i className="fas fa-key me-2"></i>New Password
+                  <label htmlFor="new_password" className="form-label text-warning">
+                    <i className="fas fa-key me-2"></i> New Password
                   </label>
                   <input 
+                    id="new_password"
                     type="password" 
                     className={`form-control ${errors.new_password ? 'is-invalid' : ''}`}
                     name="new_password"
@@ -197,10 +197,11 @@ const ChangePassword = () => {
                 </div>
                 
                 <div className="mb-4">
-                  <label className="form-label text-warning">
-                    <i className="fas fa-key me-2"></i>Confirm New Password
+                  <label htmlFor="confirm_password" className="form-label text-warning">
+                    <i className="fas fa-key me-2"></i> Confirm Password
                   </label>
                   <input 
+                    id="confirm_password"
                     type="password" 
                     className={`form-control ${errors.confirm_password ? 'is-invalid' : ''}`}
                     name="confirm_password"

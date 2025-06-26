@@ -7,12 +7,10 @@ const SharedAnalysisView = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [analysis, setAnalysis] = useState(null);  const [requiresPassword, setRequiresPassword] = useState(false);
+  const [analysis, setAnalysis] = useState(null);
+  const [requiresPassword, setRequiresPassword] = useState(false);
   const [password, setPassword] = useState('');
   const [submittingPassword, setSubmittingPassword] = useState(false);
-  const [xValue, setXValue] = useState('');
-  const [evaluationResult, setEvaluationResult] = useState(null);
-  const [evaluating, setEvaluating] = useState(false);
   useEffect(() => {
     fetchSharedAnalysis();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -53,33 +51,27 @@ const SharedAnalysisView = () => {
     }
   };
 
-  const handleEvaluate = async (e) => {
-    e.preventDefault();
-    if (!xValue.trim()) return;
-
-    setEvaluating(true);
-    setError('');
-
-    try {
-      // Parse the first valid number from the input
-      const xValues = xValue
-        .split(',')
-        .map((x) => Number.parseFloat(x.trim()))
-        .filter((x) => !isNaN(x));
-      
-      if (xValues.length === 0) {
-        setError('Please enter a valid number');
-        return;
-      }
-
-      // Use the first value and pass the analysis ID
-      const response = await signalAPI.evaluateFunction(xValues[0], analysisId);
-      setEvaluationResult(response.data);
-    } catch (error) {
-      setError(error.response?.data?.error || 'Failed to evaluate function');
-    } finally {
-      setEvaluating(false);
-    }
+  // Helper function to format fitted function with proper spacing
+  const formatFittedFunction = (fittedFunction) => {
+    if (!fittedFunction) return 'Loading...';
+    
+    return fittedFunction
+      // Add spaces around operators
+      .replace(/\+/g, ' + ')
+      .replace(/-/g, ' - ')
+      .replace(/\*/g, ' * ')
+      // Add spaces around parentheses for better readability
+      .replace(/\(/g, '(')
+      .replace(/\)/g, ')')
+      // Add space after π
+      .replace(/π/g, 'π * ')
+      // Clean up any double spaces
+      .replace(/\s+/g, ' ')
+      // Fix cases where we might have created "π * *" patterns
+      .replace(/π \* \*/g, 'π *')
+      // Fix negative signs that might have gotten extra spaces
+      .replace(/\+ -/g, '- ')
+      .trim();
   };
 
   if (loading) {
@@ -365,9 +357,12 @@ const SharedAnalysisView = () => {
                       color: "#ffc107",
                       textShadow: "0 0 10px rgba(255, 193, 7, 0.3)",
                       fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                      wordBreak: "break-all",
+                      whiteSpace: "pre-wrap",
+                      lineHeight: "1.4",
                     }}
                   >
-                    {analysis?.fitted_function || 'Loading...'}
+                    {formatFittedFunction(analysis?.fitted_function)}
                   </code>
                 </div>
               </div>
@@ -529,38 +524,44 @@ const SharedAnalysisView = () => {
                     Array.isArray(analysis.dominant_frequencies) &&
                     analysis.dominant_frequencies.length > 0 ? (
                       <div className="d-flex flex-column gap-3">
-                        {analysis.dominant_frequencies.map((freq, index) => {
-                          const numericFreq = typeof freq === 'number' ? freq : parseFloat(freq);
-                          const displayFreq = !isNaN(numericFreq) ? numericFreq.toFixed(3) : freq.toString();
-                          return (
-                            <div
-                              key={`freq-${index}`}
-                              className="p-3 rounded-3"
-                              style={{
-                                background:
-                                  "linear-gradient(135deg, rgba(23, 162, 184, 0.1) 0%, rgba(23, 162, 184, 0.05) 100%)",
-                                border: "1px solid rgba(23, 162, 184, 0.2)",
-                                transition: "all 0.3s ease",
-                                cursor: "pointer",
-                              }}
-                              onMouseOver={(e) => {
-                                e.currentTarget.style.transform = "translateY(-2px)"
-                                e.currentTarget.style.boxShadow = "0 8px 25px rgba(23, 162, 184, 0.3)"
-                                e.currentTarget.style.border = "1px solid rgba(23, 162, 184, 0.5)"
-                              }}
-                              onMouseOut={(e) => {
-                                e.currentTarget.style.transform = "translateY(0)"
-                                e.currentTarget.style.boxShadow = "none"
-                                e.currentTarget.style.border = "1px solid rgba(23, 162, 184, 0.2)"
-                              }}
-                            >
-                              <div className="text-light text-center">
+                        {analysis.dominant_frequencies.map((freq, index) => (
+                          <div
+                            key={`freq-${index}`}
+                            className="p-3 rounded-3"
+                            style={{
+                              background:
+                                "linear-gradient(135deg, rgba(23, 162, 184, 0.1) 0%, rgba(23, 162, 184, 0.05) 100%)",
+                              border: "1px solid rgba(23, 162, 184, 0.2)",
+                              transition: "all 0.3s ease",
+                              cursor: "pointer",
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.transform = "translateY(-2px)"
+                              e.currentTarget.style.boxShadow = "0 8px 25px rgba(23, 162, 184, 0.3)"
+                              e.currentTarget.style.border = "1px solid rgba(23, 162, 184, 0.5)"
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.transform = "translateY(0)"
+                              e.currentTarget.style.boxShadow = "none"
+                              e.currentTarget.style.border = "1px solid rgba(23, 162, 184, 0.2)"
+                            }}
+                          >
+                            <div className="row g-2 text-light">
+                              <div className="col-6">
                                 <small className="text-muted d-block">Frequency</small>
-                                <span className="fw-bold fs-5">{displayFreq} Hz</span>
+                                <span className="fw-bold">
+                                  {Array.isArray(freq) && freq[0] !== undefined ? freq[0].toFixed(4) : "N/A"} Hz
+                                </span>
+                              </div>
+                              <div className="col-6">
+                                <small className="text-muted d-block">Amplitude</small>
+                                <span className="fw-bold">
+                                  {Array.isArray(freq) && freq[1] !== undefined ? freq[1].toFixed(4) : "N/A"}
+                                </span>
                               </div>
                             </div>
-                          );
-                        })}
+                          </div>
+                        ))}
                       </div>
                     ) : (
                       <div
@@ -601,7 +602,173 @@ const SharedAnalysisView = () => {
               </div>
             </div>
 
-            {/* Function Evaluation Card */}
+            {/* Visualizations */}
+            {(analysis?.has_visualizations || analysis?.original_signal_plot || analysis?.fitted_signal_plot || analysis?.frequency_analysis_plot) && (
+              <div
+                className="card mb-4"
+                style={{
+                  background: "rgba(255, 255, 255, 0.03)",
+                  backdropFilter: "blur(10px)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRadius: "20px",
+                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+                  transition: "all 0.3s ease",
+                  cursor: "pointer",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = "translateY(-5px)"
+                  e.currentTarget.style.boxShadow = "0 15px 40px rgba(255, 193, 7, 0.4)"
+                  e.currentTarget.style.border = "1px solid rgba(255, 193, 7, 0.5)"
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)"
+                  e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.3)"
+                  e.currentTarget.style.border = "1px solid rgba(255, 255, 255, 0.1)"
+                }}
+              >
+                <div className="card-body p-4">
+                  <h4 className="text-light mb-4 d-flex align-items-center gap-3">
+                    <i className="fas fa-chart-area" style={{ color: "#6f42c1" }}></i>
+                    VISUALIZATIONS
+                  </h4>
+                  <div className="row g-4">
+                    {analysis?.frequency_analysis_plot && (
+                      <div className="col-lg-6">
+                        <div
+                          className="p-3 rounded-3"
+                          style={{
+                            background: "rgba(255, 255, 255, 0.02)",
+                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                          }}
+                        >
+                          <h6 className="text-light mb-3">Frequency Spectrum</h6>
+                          <img
+                            src={analysis.frequency_analysis_plot}
+                            alt="Frequency Spectrum"
+                            className="img-fluid rounded-3"
+                            style={{ boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)" }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {analysis?.original_signal_plot && (
+                      <div className="col-lg-6">
+                        <div
+                          className="p-3 rounded-3"
+                          style={{
+                            background: "rgba(255, 255, 255, 0.02)",
+                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                          }}
+                        >
+                          <h6 className="text-light mb-3">Training vs Testing Performance</h6>
+                          <img
+                            src={analysis.original_signal_plot}
+                            alt="Training vs Testing"
+                            className="img-fluid rounded-3"
+                            style={{ boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)" }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {analysis?.fitted_signal_plot && (
+                      <div className="col-12">
+                        <div
+                          className="p-3 rounded-3"
+                          style={{
+                            background: "rgba(255, 255, 255, 0.02)",
+                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                          }}
+                        >
+                          <h6 className="text-light mb-3">Original vs Reconstructed Signal</h6>
+                          <img
+                            src={analysis.fitted_signal_plot}
+                            alt="Original vs Reconstructed"
+                            className="img-fluid rounded-3"
+                            style={{ boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)" }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Data Preview */}
+            {analysis?.data_preview && analysis.data_preview.length > 0 && (
+              <div
+                className="card mb-4"
+                style={{
+                  background: "rgba(255, 255, 255, 0.03)",
+                  backdropFilter: "blur(10px)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRadius: "20px",
+                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+                  transition: "all 0.3s ease",
+                  cursor: "pointer",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = "translateY(-5px)"
+                  e.currentTarget.style.boxShadow = "0 15px 40px rgba(255, 193, 7, 0.4)"
+                  e.currentTarget.style.border = "1px solid rgba(255, 193, 7, 0.5)"
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)"
+                  e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.3)"
+                  e.currentTarget.style.border = "1px solid rgba(255, 255, 255, 0.1)"
+                }}
+              >
+                <div className="card-body p-4">
+                  <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+                    <h4 className="text-light mb-0 d-flex align-items-center gap-3">
+                      <i className="fas fa-table" style={{ color: "#17a2b8" }}></i>
+                      DATA PREVIEW
+                      <span
+                        className="badge ms-2 px-2 py-1"
+                        style={{
+                          background: "rgba(23, 162, 184, 0.2)",
+                          color: "#17a2b8",
+                          borderRadius: "15px",
+                          fontSize: "0.7rem",
+                        }}
+                      >
+                        First 10 rows
+                      </span>
+                    </h4>
+                  </div>
+                  <div className="table-responsive">
+                    <table className="table table-dark table-hover">
+                      <thead>
+                        <tr style={{ borderBottom: "2px solid rgba(23, 162, 184, 0.3)" }}>
+                          <th className="py-3 px-4" style={{ background: "rgba(23, 162, 184, 0.1)" }}>
+                            X
+                          </th>
+                          <th className="py-3 px-4" style={{ background: "rgba(23, 162, 184, 0.1)" }}>
+                            Y
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {analysis.data_preview.slice(0, 10).map((row, index) => (
+                          <tr
+                            key={`data-row-${index}`}
+                            style={{
+                              borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+                              transition: "all 0.2s ease",
+                            }}
+                          >
+                            <td className="py-2 px-4 font-monospace">{typeof row.x === 'number' ? row.x.toFixed(3) : row.x}</td>
+                            <td className="py-2 px-4 font-monospace">{typeof row.y === 'number' ? row.y.toFixed(3) : row.y}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Navigation */}
             <div
               className="card mb-4"
               style={{
@@ -611,128 +778,35 @@ const SharedAnalysisView = () => {
                 borderRadius: "20px",
                 boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
                 transition: "all 0.3s ease",
-                cursor: "pointer",
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = "translateY(-5px)"
-                e.currentTarget.style.boxShadow = "0 15px 40px rgba(255, 193, 7, 0.4)"
-                e.currentTarget.style.border = "1px solid rgba(255, 193, 7, 0.5)"
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = "translateY(0)"
-                e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.3)"
-                e.currentTarget.style.border = "1px solid rgba(255, 255, 255, 0.1)"
               }}
             >
-              <div className="card-body p-4">
-                <h4 className="text-light mb-4 d-flex align-items-center gap-3">
-                  <i className="fas fa-calculator" style={{ color: "#ffc107" }}></i>
-                  EVALUATE FUNCTION
-                </h4>
-                <form onSubmit={handleEvaluate} className="row g-3 align-items-end">                  <div className="col-md-8">
-                    <label htmlFor="xValue" className="form-label text-light mb-2">X Value</label>
-                    <input
-                      type="text"
-                      id="xValue"
-                      className="form-control form-control-lg"
-                      placeholder="Enter an x value (e.g., 1.5)"
-                      value={xValue}
-                      onChange={(e) => setXValue(e.target.value)}
-                      style={{
-                        background: "rgba(255, 255, 255, 0.1)",
-                        border: "1px solid rgba(255, 255, 255, 0.2)",
-                        borderRadius: "15px",
-                        color: "white",
-                        fontSize: "1rem",
-                      }}
-                    />
-                  </div>
-                  <div className="col-md-4">
-                    <button
-                      type="submit"
-                      className="btn btn-lg w-100"
-                      disabled={evaluating || !xValue.trim()}
-                      style={{
-                        background: "transparent",
-                        border: evaluating ? "2px solid rgba(108, 117, 125, 0.5)" : "2px solid #ffc107",
-                        borderRadius: "15px",
-                        color: evaluating ? "rgba(108, 117, 125, 0.5)" : "#ffc107",
-                        fontWeight: "700",
-                        transition: "all 0.3s ease",
-                      }}
-                      onMouseOver={(e) => {
-                        if (!evaluating && xValue.trim()) {
-                          e.target.style.transform = "translateY(-2px)"
-                          e.target.style.boxShadow = "0 8px 25px rgba(255, 193, 7, 0.4)"
-                          e.target.style.textShadow = "0 0 10px rgba(255, 193, 7, 0.6)"
-                        }
-                      }}
-                      onMouseOut={(e) => {
-                        e.target.style.transform = "translateY(0)"
-                        e.target.style.boxShadow = "none"
-                        e.target.style.textShadow = "none"
-                      }}
-                      onFocus={(e) => {
-                        if (!evaluating && xValue.trim()) {
-                          e.target.style.transform = "translateY(-2px)"
-                          e.target.style.boxShadow = "0 8px 25px rgba(255, 193, 7, 0.4)"
-                          e.target.style.textShadow = "0 0 10px rgba(255, 193, 7, 0.6)"
-                        }
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.transform = "translateY(0)"
-                        e.target.style.boxShadow = "none"
-                        e.target.style.textShadow = "none"
-                      }}
-                    >
-                      {evaluating ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                          Evaluating...
-                        </>
-                      ) : (
-                        <>
-                          <i className="fas fa-play me-2"></i>
-                          Evaluate
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </form>
-
-                {evaluationResult && (
-                  <div
-                    className="mt-4 p-4 rounded-3"
+              <div className="card-body p-4 text-center">
+                <div className="d-flex flex-column flex-md-row justify-content-center gap-3">
+                  <button 
+                    className="btn px-4 py-2"
+                    onClick={() => navigate('/')}
                     style={{
-                      background: "rgba(0, 0, 0, 0.4)",
-                      border: "2px solid rgba(40, 167, 69, 0.3)",
+                      background: "transparent",
+                      border: "2px solid #6c757d",
+                      borderRadius: "25px",
+                      color: "#6c757d",
+                      fontWeight: "600",
+                      transition: "all 0.3s ease",
+                    }}
+                    onMouseOver={(e) => {
+                      e.target.style.transform = "translateY(-2px)"
+                      e.target.style.boxShadow = "0 8px 25px rgba(108, 117, 125, 0.4)"
+                      e.target.style.textShadow = "0 0 10px rgba(108, 117, 125, 0.6)"
+                    }}
+                    onMouseOut={(e) => {
+                      e.target.style.transform = "translateY(0)"
+                      e.target.style.boxShadow = "none"
+                      e.target.style.textShadow = "none"
                     }}
                   >
-                    <h6 className="text-light mb-3 d-flex align-items-center gap-2">
-                      <i className="fas fa-check-circle text-success"></i>
-                      Evaluation Result
-                    </h6>
-                    <div className="p-3 rounded" style={{ background: "rgba(40, 167, 69, 0.1)" }}>
-                      <code className="text-success fs-5">
-                        f({evaluationResult.x_values[0]}) = {evaluationResult.y_values[0]?.toFixed(6)}
-                      </code>
-                    </div>
-                  </div>
-                )}
-
-                {error && (
-                  <div
-                    className="alert mt-4 p-3 rounded-3"
-                    style={{
-                      background: "linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%)",
-                      border: "1px solid rgba(220, 53, 69, 0.3)",
-                      color: "#f8d7da",
-                    }}
-                  >
-                    <i className="fas fa-exclamation-triangle me-2"></i>
-                    {error}
-                  </div>
-                )}
+                    <i className="fas fa-home me-2"></i> HOME
+                  </button>
+                </div>
               </div>
             </div>
           </div>

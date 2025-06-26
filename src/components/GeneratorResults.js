@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { generatorAPI } from '../services/api';
 
 const GeneratorResults = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   // Create and trigger download of CSV data client-side
   const downloadCsv = () => {
