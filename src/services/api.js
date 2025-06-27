@@ -1,6 +1,28 @@
 import axios from 'axios';
 
-// Automatically include CSRF via xsrf settings
+// Helper to read CSRF token from cookies
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// Create a separate axios instance for fetching CSRF token to avoid circular dependencies
+const csrfApi = axios.create({
+  baseURL: process.env.REACT_APP_API_BASE_URL,
+  withCredentials: true,
+});
+
+// Main API instance
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_BASE_URL,
   withCredentials: true,
@@ -11,20 +33,46 @@ const api = axios.create({
   xsrfHeaderName: 'X-CSRFToken',
 });
 
-// Request interceptor: fetch CSRF token before mutating requests
+// Function to ensure we have a CSRF token
+async function ensureCSRFToken() {
+  let csrfToken = getCookie('csrftoken');
+  
+  if (!csrfToken) {
+    try {
+      const response = await csrfApi.get('/csrf/');
+      csrfToken = getCookie('csrftoken');
+      
+      // If still no token from cookie, try to get it from response
+      if (!csrfToken && response.data && response.data.csrfToken) {
+        csrfToken = response.data.csrfToken;
+      }
+    } catch (error) {
+      console.warn('Failed to fetch CSRF token:', error);
+    }
+  }
+  
+  return csrfToken;
+}
+
+// Request interceptor: ensure CSRF token for mutating requests
 api.interceptors.request.use(
   async (config) => {
     const method = config.method?.toLowerCase();
     if (['post', 'put', 'patch', 'delete'].includes(method)) {
-      try {
-        await api.get('/csrf/');  // sets the csrftoken cookie
-      } catch (e) {
-        console.warn('Failed to fetch CSRF token:', e);
-      }
-      // Attach CSRF token header
-      const csrfToken = getCookie('csrftoken');
-      if (config.headers) {
+      // Ensure we have a CSRF token
+      const csrfToken = await ensureCSRFToken();
+      
+      if (csrfToken) {
+        // Set the token in headers
+        if (!config.headers) {
+          config.headers = {};
+        }
         config.headers['X-CSRFToken'] = csrfToken;
+        
+        // For multipart/form-data, we need to be careful not to override Content-Type
+        if (config.headers['Content-Type'] !== 'multipart/form-data') {
+          config.headers['Content-Type'] = 'application/json';
+        }
       }
     }
     return config;
@@ -77,11 +125,9 @@ function getCookie(name) {
 export const signalAPI = {
   getHome: () => api.get('/home/'),
   uploadCSV: (formData) => {
-    const csrfToken = getCookie('csrftoken');
     return api.post('/upload/', formData, {
       headers: { 
         'Content-Type': 'multipart/form-data',
-        'X-CSRFToken': csrfToken,
       }
     });
   },
@@ -92,23 +138,10 @@ export const signalAPI = {
   },
   getAnalyses: () => api.get('/analyses/'),
   getAnalysis: (id) => api.get(`/analyses/${id}/`),
-  updateAnalysis: (id, data) => {
-    const csrfToken = getCookie('csrftoken');
-    return api.patch(`/analyses/${id}/`, data, {
-      headers: { 'X-CSRFToken': csrfToken }
-    });
-  },
-  deleteAnalysis: (id) => {
-    const csrfToken = getCookie('csrftoken');
-    return api.delete(`/analyses/${id}/`, {
-      headers: { 'X-CSRFToken': csrfToken }
-    });
-  },
+  updateAnalysis: (id, data) => api.patch(`/analyses/${id}/`, data),
+  deleteAnalysis: (id) => api.delete(`/analyses/${id}/`),
   bulkDeleteAnalyses: (analysisIds) => {
-    const csrfToken = getCookie('csrftoken');
-    return api.post('/analyses/bulk-delete/', { analysis_ids: analysisIds }, {
-      headers: { 'X-CSRFToken': csrfToken }
-    });
+    return api.post('/analyses/bulk-delete/', { analysis_ids: analysisIds });
   },
   saveSessionAnalysis: () => api.post('/save-analysis/'),
   clearSession: () => api.post('/clear-session/'),
@@ -116,17 +149,11 @@ export const signalAPI = {
   // Share functionality
   getShareOptions: (analysisId) => api.get(`/analyses/${analysisId}/share-options/`),
   updateShareOptions: (analysisId, shareData) => {
-    const csrfToken = getCookie('csrftoken');
-    return api.post(`/analyses/${analysisId}/share-options/`, shareData, {
-      headers: { 'X-CSRFToken': csrfToken }
-    });
+    return api.post(`/analyses/${analysisId}/share-options/`, shareData);
   },
   getSharedAnalysis: (analysisId) => api.get(`/share/${analysisId}/`),
   accessPasswordProtectedAnalysis: (analysisId, password) => {
-    const csrfToken = getCookie('csrftoken');
-    return api.post(`/share/${analysisId}/`, { password }, {
-      headers: { 'X-CSRFToken': csrfToken }
-    });
+    return api.post(`/share/${analysisId}/`, { password });
   },
 };
 
@@ -145,6 +172,25 @@ export const profileAPI = {
       }
     });
   },
+};
+
+// Utility function to manually refresh CSRF token
+export const refreshCSRFToken = async () => {
+  try {
+    const response = await csrfApi.get('/csrf/');
+    const tokenFromCookie = getCookie('csrftoken');
+    const tokenFromResponse = response.data?.csrfToken;
+    
+    console.log('CSRF Token refreshed:', {
+      fromCookie: tokenFromCookie,
+      fromResponse: tokenFromResponse
+    });
+    
+    return tokenFromCookie || tokenFromResponse;
+  } catch (error) {
+    console.error('Failed to refresh CSRF token:', error);
+    throw error;
+  }
 };
 
 export default api;
