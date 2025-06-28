@@ -37,6 +37,9 @@ const Footer = () => {
                   <a href="https://github.com/rndastech/Signal-Predictor" className="social-link" aria-label="GitHub">
                     <i className="fab fa-github"></i>
                   </a>
+                  <a href="https://github.com/rndastech/Signal-Predictor-Backend" className="social-link" aria-label="GitHub">
+                    <i className="fab fa-github"></i>
+                  </a>
                   <a href="https://www.linkedin.com/in/ritesh-narayan-das-6196b3268/" className="social-link" aria-label="LinkedIn">
                     <i className="fab fa-linkedin"></i>
                   </a>
@@ -71,8 +74,8 @@ const Footer = () => {
               <div className="footer-section">
                 <h5 className="footer-title">SUPPORT</h5>
                 <ul className="footer-links">
-                  <li><a href="#contact">Contact Me</a></li>
-                  <li><a href="#status">System Status</a></li>
+                  <li><a href="mailto:rndas2004@gmail.com">Contact Me</a></li>
+                  <li><a href="https://stats.uptimerobot.com/SnqMfhs2wz" target="_blank" rel="noopener noreferrer">System Status</a></li>
                 </ul>
               </div>
             </div>            {/* Legal */}
