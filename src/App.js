@@ -23,6 +23,7 @@ import ForgotPassword from './components/ForgotPassword';
 import ResetPasswordConfirm from './components/ResetPasswordConfirm';
 import EmailVerificationSent from './components/EmailVerificationSent';
 import VerifyEmail from './components/VerifyEmail';
+import Pricing from './components/Pricing';
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
             <Route path="/results" element={<Results />} />
             <Route path="/signal-generator" element={<SignalGenerator />} />
             <Route path="/generator-results" element={<GeneratorResults />} />
+            <Route path="/pricing" element={<Pricing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/profile" element={<Profile />} />

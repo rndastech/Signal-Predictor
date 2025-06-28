@@ -99,6 +99,16 @@ const Navbar = () => {
                 <span>Generate Signal</span>
               </Link>
             </li>
+            <li className="nav-item-futuristic">
+              <Link 
+                className={`nav-link-futuristic ${location.pathname === '/pricing' ? 'active' : ''}`} 
+                to="/pricing"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <i className="fas fa-tag nav-icon"></i>
+                <span>Pricing</span>
+              </Link>
+            </li>
             {isAuthenticated && (
               <li className="nav-item-futuristic">
                 <Link 
