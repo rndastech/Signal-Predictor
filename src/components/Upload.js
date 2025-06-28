@@ -77,8 +77,28 @@ const Upload = () => {
       const response = await signalAPI.uploadCSV(formData);
       
       if (response.data.success) {
-        // Navigate to analysis detail page for the newly created analysis
-        navigate(`/analysis/${response.data.analysis.id}`);
+        // For authenticated users, navigate to saved analysis
+        if (response.data.analysis && response.data.analysis.id) {
+          navigate(`/analysis/${response.data.analysis.id}`);
+        } 
+        // For anonymous users, navigate to results page with data
+        else if (response.data.temp_analysis) {
+          navigate('/results', { 
+            state: { 
+              analysisResult: response.data.result,
+              analysis: null // No saved analysis for anonymous users
+            } 
+          });
+        }
+        // Fallback navigation
+        else {
+          navigate('/results', { 
+            state: { 
+              analysisResult: response.data.result,
+              analysis: response.data.analysis || null
+            } 
+          });
+        }
       } else {
         setError(response.data.error || 'Upload failed');
       }

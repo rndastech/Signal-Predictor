@@ -693,96 +693,207 @@ const Results = () => {
                 )}
               </div>
             </div>            {/* Visualizations */}
-            {analysisResult.plots && (
-              <div
-                className="card mb-4"
-                style={{
-                  background: "rgba(255, 255, 255, 0.03)",
-                  backdropFilter: "blur(10px)",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  borderRadius: "20px",
-                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
-                  transition: "all 0.3s ease",
-                  cursor: "pointer",
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = "translateY(-5px)"
-                  e.currentTarget.style.boxShadow = "0 15px 40px rgba(255, 193, 7, 0.4)"
-                  e.currentTarget.style.border = "1px solid rgba(255, 193, 7, 0.5)"
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)"
-                  e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.3)"
-                  e.currentTarget.style.border = "1px solid rgba(255, 255, 255, 0.1)"
-                }}
-              >
-                <div className="card-body p-4">
-                  <h4 className="text-light mb-4 d-flex align-items-center gap-3">
-                    <i className="fas fa-chart-area" style={{ color: "#6f42c1" }}></i>
-                    VISUALIZATIONS
-                  </h4>
-                  <div className="row g-4">
-                    {analysisResult.plots.frequency_spectrum && (
-                      <div className="col-lg-6">
-                        <div
-                          className="p-3 rounded-3"
+            <div
+              className="card mb-4"
+              style={{
+                background: "rgba(255, 255, 255, 0.03)",
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                borderRadius: "20px",
+                boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+                transition: "all 0.3s ease",
+                cursor: "pointer",
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = "translateY(-5px)"
+                e.currentTarget.style.boxShadow = "0 15px 40px rgba(255, 193, 7, 0.4)"
+                e.currentTarget.style.border = "1px solid rgba(255, 193, 7, 0.5)"
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = "translateY(0)"
+                e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.3)"
+                e.currentTarget.style.border = "1px solid rgba(255, 255, 255, 0.1)"
+              }}
+            >
+              <div className="card-body p-4">
+                <h4 className="text-light mb-4 d-flex align-items-center gap-3">
+                  <i className="fas fa-chart-area" style={{ color: "#6f42c1" }}></i>
+                  VISUALIZATIONS
+                  {!isAuthenticated && (
+                    <span
+                      className="badge ms-2 px-2 py-1"
+                      style={{
+                        background: "rgba(220, 53, 69, 0.2)",
+                        color: "#dc3545",
+                        borderRadius: "15px",
+                        fontSize: "0.7rem",
+                      }}
+                    >
+                      <i className="fas fa-lock me-1"></i>
+                      LOCKED
+                    </span>
+                  )}
+                </h4>
+                
+                {isAuthenticated ? (
+                  // Show visualizations for authenticated users
+                  analysisResult.plots && (
+                    <div className="row g-4">
+                      {analysisResult.plots.frequency_spectrum && (
+                        <div className="col-lg-6">
+                          <div
+                            className="p-3 rounded-3"
+                            style={{
+                              background: "rgba(255, 255, 255, 0.02)",
+                              border: "1px solid rgba(255, 255, 255, 0.1)",
+                            }}
+                          >
+                            <h6 className="text-light mb-3">Frequency Spectrum</h6>
+                            <img
+                              src={analysisResult.plots.frequency_spectrum}
+                              alt="Frequency Spectrum"
+                              className="img-fluid rounded-3"
+                              style={{ boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)" }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                      {analysisResult.plots.original_vs_reconstructed && (
+                        <div className="col-lg-6">
+                          <div
+                            className="p-3 rounded-3"
+                            style={{
+                              background: "rgba(255, 255, 255, 0.02)",
+                              border: "1px solid rgba(255, 255, 255, 0.1)",
+                            }}
+                          >
+                            <h6 className="text-light mb-3">Original vs Reconstructed Signal</h6>
+                            <img
+                              src={analysisResult.plots.original_vs_reconstructed}
+                              alt="Original vs Reconstructed"
+                              className="img-fluid rounded-3"
+                              style={{ boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)" }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                      {analysisResult.plots.training_vs_testing && (
+                        <div className="col-12">
+                          <div
+                            className="p-3 rounded-3"
+                            style={{
+                              background: "rgba(255, 255, 255, 0.02)",
+                              border: "1px solid rgba(255, 255, 255, 0.1)",
+                            }}
+                          >
+                            <h6 className="text-light mb-3">Training vs Testing Performance</h6>
+                            <img
+                              src={analysisResult.plots.training_vs_testing}
+                              alt="Training vs Testing"
+                              className="img-fluid rounded-3"
+                              style={{ boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)" }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                ) : (
+                  // Show locked area for non-authenticated users
+                  <div
+                    className="text-center py-5"
+                    style={{
+                      background: "linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%)",
+                      border: "2px dashed rgba(220, 53, 69, 0.3)",
+                      borderRadius: "20px",
+                      position: "relative",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: "url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMiIgZmlsbD0icmdiYSgyMjAsIDUzLCA2OSwgMC4xKSIvPgo8L3N2Zz4K') repeat",
+                        opacity: 0.3,
+                      }}
+                    ></div>
+                    <div style={{ position: "relative", zIndex: 1 }}>
+                      <i
+                        className="fas fa-lock mb-4"
+                        style={{
+                          fontSize: "4rem",
+                          color: "#dc3545",
+                          textShadow: "0 0 20px rgba(220, 53, 69, 0.5)",
+                        }}
+                      ></i>
+                      <h3 className="text-light mb-3" style={{ fontWeight: "700" }}>
+                        PREMIUM VISUALIZATIONS
+                      </h3>
+                      <p className="text-muted mb-4 fs-5">
+                        Advanced charts and plots are available for registered users only
+                      </p>
+                      <div className="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                        <Link
+                          to="/login"
+                          className="btn px-4 py-3 text-decoration-none"
                           style={{
-                            background: "rgba(255, 255, 255, 0.02)",
-                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                            background: "linear-gradient(45deg, #dc3545, #c82333)",
+                            border: "none",
+                            borderRadius: "25px",
+                            color: "white",
+                            fontWeight: "600",
+                            transition: "all 0.3s ease",
+                          }}
+                          onMouseOver={(e) => {
+                            e.target.style.transform = "translateY(-2px)"
+                            e.target.style.boxShadow = "0 8px 25px rgba(220, 53, 69, 0.4)"
+                          }}
+                          onMouseOut={(e) => {
+                            e.target.style.transform = "translateY(0)"
+                            e.target.style.boxShadow = "none"
                           }}
                         >
-                          <h6 className="text-light mb-3">Frequency Spectrum</h6>
-                          <img
-                            src={analysisResult.plots.frequency_spectrum}
-                            alt="Frequency Spectrum"
-                            className="img-fluid rounded-3"
-                            style={{ boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)" }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                    {analysisResult.plots.original_vs_reconstructed && (
-                      <div className="col-lg-6">
-                        <div
-                          className="p-3 rounded-3"
+                          <i className="fas fa-sign-in-alt me-2"></i>
+                          LOGIN TO UNLOCK
+                        </Link>
+                        <Link
+                          to="/register"
+                          className="btn px-4 py-3 text-decoration-none"
                           style={{
-                            background: "rgba(255, 255, 255, 0.02)",
-                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                            background: "transparent",
+                            border: "2px solid #dc3545",
+                            borderRadius: "25px",
+                            color: "#dc3545",
+                            fontWeight: "600",
+                            transition: "all 0.3s ease",
+                          }}
+                          onMouseOver={(e) => {
+                            e.target.style.transform = "translateY(-2px)"
+                            e.target.style.boxShadow = "0 8px 25px rgba(220, 53, 69, 0.3)"
+                            e.target.style.background = "rgba(220, 53, 69, 0.1)"
+                          }}
+                          onMouseOut={(e) => {
+                            e.target.style.transform = "translateY(0)"
+                            e.target.style.boxShadow = "none"
+                            e.target.style.background = "transparent"
                           }}
                         >
-                          <h6 className="text-light mb-3">Original vs Reconstructed Signal</h6>
-                          <img
-                            src={analysisResult.plots.original_vs_reconstructed}
-                            alt="Original vs Reconstructed"
-                            className="img-fluid rounded-3"
-                            style={{ boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)" }}
-                          />
-                        </div>
+                          <i className="fas fa-user-plus me-2"></i>
+                          CREATE ACCOUNT
+                        </Link>
                       </div>
-                    )}
-                    {analysisResult.plots.training_vs_testing && (
-                      <div className="col-12">
-                        <div
-                          className="p-3 rounded-3"
-                          style={{
-                            background: "rgba(255, 255, 255, 0.02)",
-                            border: "1px solid rgba(255, 255, 255, 0.1)",
-                          }}
-                        >
-                          <h6 className="text-light mb-3">Training vs Testing Performance</h6>
-                          <img
-                            src={analysisResult.plots.training_vs_testing}
-                            alt="Training vs Testing"
-                            className="img-fluid rounded-3"
-                            style={{ boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)" }}
-                          />
-                        </div>
-                      </div>
-                    )}
+                      <small className="text-muted d-block mt-3">
+                        Join thousands of users analyzing signals with premium features
+                      </small>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
-            )}            {/* Data Preview */}
+            </div>            {/* Data Preview */}
             {analysisResult.csv_data && analysisResult.csv_data.length > 0 && (
               <div
                 className="card mb-4"

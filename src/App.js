@@ -9,6 +9,7 @@ import Login from './components/Login';
 import Signup from './components/Signup';
 import Profile from './components/Profile';
 import AnalysisList from './components/AnalysisList';
+import Results from './components/Results';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
 import AnalysisDetail from './components/AnalysisDetail';
@@ -31,6 +32,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/upload" element={<Upload />} />
+            <Route path="/results" element={<Results />} />
             <Route path="/signal-generator" element={<SignalGenerator />} />
             <Route path="/generator-results" element={<GeneratorResults />} />
             <Route path="/login" element={<Login />} />
